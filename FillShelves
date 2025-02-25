@@ -1,0 +1,30 @@
+Sub FillColumnA()
+    Dim ws As Worksheet
+    Dim lastRow As Long
+    Dim i As Long
+    Dim count As Long
+    Dim startValue As Long
+
+    ' Set the worksheet to the active sheet
+    Set ws = ActiveSheet
+
+    ' Find the last row in column E
+    lastRow = ws.Cells(ws.Rows.Count, "E").End(xlUp).Row
+
+    ' Initialize the starting value
+    startValue = 0
+
+    ' Loop through each row in column E
+    For i = 1 To lastRow
+        ' Check if the current row is the start of a new group
+        If ws.Cells(i, 5).Value = 1 Then
+            startValue = startValue + 1
+            count = 1
+        Else
+            count = count + 1
+        End If
+
+        ' Fill the corresponding cell in column A
+        ws.Cells(i, 1).Value = startValue
+    Next i
+End Sub
