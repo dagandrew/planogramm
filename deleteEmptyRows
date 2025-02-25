@@ -1,9 +1,10 @@
 Sub DeleteEmptyRowsInSelection()
-    Dim rng As Range
-    Dim rowsToDelete As Range
     Dim ws As Worksheet
-    Dim row As Range
     Dim lastRow As Long
+    Dim lastCol As Long
+    Dim usedRange As Range
+    Dim row As Range
+    Dim rowsToDelete As Range
 
     ' Check if a range is selected
     If Selection Is Nothing Then
@@ -14,11 +15,15 @@ Sub DeleteEmptyRowsInSelection()
     ' Set the worksheet
     Set ws = Selection.Worksheet
 
-    ' Determine the last row in the selection
-    lastRow = Selection.Rows(Selection.Rows.Count).row
+    ' Determine the last used row and column in the worksheet
+    lastRow = ws.Cells.Find("*", SearchOrder:=xlByRows, SearchDirection:=xlPrevious).row
+    lastCol = ws.Cells.Find("*", SearchOrder:=xlByColumns, SearchDirection:=xlPrevious).Column
 
-    ' Loop through each row in the selection
-    For Each row In ws.Rows(Selection.row & ":" & lastRow)
+    ' Define the used range
+    Set usedRange = ws.Range(ws.Cells(1, 1), ws.Cells(lastRow, lastCol))
+
+    ' Loop through each row in the used range
+    For Each row In usedRange.Rows
         ' Check if the entire row is empty
         If Application.WorksheetFunction.CountA(row) = 0 Then
             If rowsToDelete Is Nothing Then
