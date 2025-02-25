@@ -1,0 +1,99 @@
+Sub PriceBrandVolumeDescVolCompSort()
+    Dim ws As Worksheet
+    Dim selectedRange As Range
+    Dim sortRange As Range
+    Dim lastRow As Long
+    Dim brandSortDict As Object
+    Dim cell As Range
+    Dim brand As String
+    Dim volume As Double
+    Dim price As Double
+    Dim pricePerML As Double
+    Dim currentData As Variant
+
+    Set ws = ActiveSheet
+    Set selectedRange = Selection
+
+    If Not Intersect(selectedRange, ws.Columns("J")) Is Nothing Then
+        Set sortRange = Intersect(selectedRange.EntireRow, ws.usedRange)
+
+        ' Initialize dictionary to track brand's min volume and max price per ml
+        Set brandSortDict = CreateObject("Scripting.Dictionary")
+
+        ' Calculate Price per ml in Column M and populate brand data
+        ws.Range("M1").Value = "Price per ml"
+        For Each cell In Intersect(sortRange, ws.Columns("G"))
+            If Not isEmpty(cell.Value) Then
+                brand = cell.Value
+                volume = cell.Offset(0, 2).Value  ' Column I
+                price = cell.Offset(0, 3).Value    ' Column J
+
+                ' Calculate Price per ml
+                If volume <> 0 Then
+                    pricePerML = price / volume
+                Else
+                    pricePerML = 0
+                End If
+                cell.Offset(0, 6).Value = pricePerML  ' Column M
+
+                ' Update brandSortDict
+                If brandSortDict.Exists(brand) Then
+                    currentData = brandSortDict(brand)
+                    ' Check if current volume is smaller or same volume with higher price/ml
+                    If volume < currentData(0) Then
+                        brandSortDict(brand) = Array(volume, pricePerML)
+                    ElseIf volume = currentData(0) Then
+                        If pricePerML > currentData(1) Then
+                            brandSortDict(brand) = Array(volume, pricePerML)
+                        End If
+                    End If
+                Else
+                    brandSortDict.Add brand, Array(volume, pricePerML)
+                End If
+            End If
+        Next cell
+
+        ' Write brand sort key to temporary Column N
+        ws.Range("N1").Value = "BrandSortKey"
+        For Each cell In Intersect(sortRange, ws.Columns("G"))
+            If Not isEmpty(cell.Value) Then
+                brand = cell.Value
+                If brandSortDict.Exists(brand) Then
+                    cell.Offset(0, 7).Value = brandSortDict(brand)(1)  ' Column N
+                Else
+                    cell.Offset(0, 7).Value = 0
+                End If
+            End If
+        Next cell
+
+        ' Apply sorting
+        On Error GoTo SortError
+        With ws.Sort
+            .SortFields.Clear
+            .SortFields.Add Key:=ws.Range("N1"), Order:=xlDescending
+            .SortFields.Add Key:=ws.Range("G1"), Order:=xlAscending
+            .SortFields.Add Key:=ws.Range("I1"), Order:=xlDescending
+            .SortFields.Add Key:=ws.Range("M1"), Order:=xlDescending
+            .SortFields.Add Key:=ws.Range("J1"), Order:=xlDescending
+            .SetRange sortRange
+            .Header = xlYes
+            .MatchCase = False
+            .Orientation = xlTopToBottom
+            .SortMethod = xlPinYin
+            .Apply
+        End With
+
+        ' Clear temporary Column N
+        lastRow = sortRange.Rows.count + sortRange.row - 1
+        ws.Range("N1:N" & lastRow).ClearContents
+
+        On Error GoTo 0
+    Else
+        MsgBox "Please select a range that includes column J.", vbExclamation
+    End If
+
+    Exit Sub
+
+SortError:
+    MsgBox "An error occurred during sorting: " & Err.Description, vbExclamation
+End Sub
