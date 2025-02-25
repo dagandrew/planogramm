@@ -1,0 +1,70 @@
+Sub PriceBrandVolumeDescSort()
+    Dim ws As Worksheet
+    Dim selectedRange As Range
+    Dim sortRange As Range
+    Dim lastRow As Long
+    Dim brandDict As Object
+    Dim maxPriceDict As Object
+    Dim cell As Range
+
+    ' pick current
+    Set ws = ActiveSheet
+    Set selectedRange = Selection
+
+    If Not Intersect(selectedRange, ws.Columns("J")) Is Nothing Then
+        Set sortRange = Intersect(selectedRange.EntireRow, ws.usedRange)
+
+        Set maxPriceDict = CreateObject("Scripting.Dictionary")
+        Set brandDict = CreateObject("Scripting.Dictionary")
+
+        For Each cell In Intersect(selectedRange, ws.Columns("G"))
+            If Not isEmpty(cell.Value) Then
+                If maxPriceDict.Exists(cell.Value) Then
+                    If cell.Offset(0, 3).Value > maxPriceDict(cell.Value) Then
+                        maxPriceDict(cell.Value) = cell.Offset(0, 3).Value
+                    End If
+                Else
+                    maxPriceDict.Add cell.Value, cell.Offset(0, 3).Value
+                End If
+            End If
+        Next cell
+
+        lastRow = selectedRange.Rows.count + selectedRange.row - 1
+        ws.Range("L1:L" & lastRow).ClearContents
+        ws.Range("L1").Value = "Max Price"
+
+        For Each cell In Intersect(selectedRange, ws.Columns("G"))
+            If Not isEmpty(cell.Value) Then
+                cell.Offset(0, 5).Value = maxPriceDict(cell.Value)
+            End If
+        Next cell
+
+        ' sort by new col
+        On Error GoTo SortError
+        ws.Sort.SortFields.Clear
+        ws.Sort.SortFields.Add Key:=ws.Range("L1"), Order:=xlDescending
+        ws.Sort.SortFields.Add Key:=ws.Range("G1"), Order:=xlAscending ' Add brand name sorting
+        ws.Sort.SortFields.Add Key:=ws.Range("I1"), Order:=xlDescending ' Add volume sorting within brand
+        ws.Sort.SortFields.Add Key:=ws.Range("J1"), Order:=xlDescending
+        With ws.Sort
+            .SetRange sortRange
+            .Header = xlYes
+            .MatchCase = False
+            .Orientation = xlTopToBottom
+            .SortMethod = xlPinYin
+            .Apply
+        End With
+        On Error GoTo 0
+
+        ' clear maximum price col
+        ws.Range("L1:L" & lastRow).ClearContents
+    Else
+        MsgBox "Please select a range that includes column J.", vbExclamation
+    End If
+
+    Exit Sub
+
+SortError:
+    MsgBox "An error occurred during sorting: " & Err.Description, vbExclamation
+End Sub
+
