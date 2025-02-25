@@ -1,0 +1,29 @@
+Sub UnwrapTextAndAdjustColumns()
+    Dim ws As Worksheet
+    Dim cell As Range
+    Dim lastColumn As Integer
+    Dim lastRow As Long
+    Dim row As Range
+
+    ' Set the worksheet you want to work with
+    Set ws = ActiveSheet
+
+    ' Find the last column and row with data
+    lastColumn = ws.Cells(1, ws.Columns.count).End(xlToLeft).Column
+    lastRow = ws.Cells(ws.Rows.count, 1).End(xlUp).row
+
+    ' Disable text wrapping for each cell in the used range
+    For Each cell In ws.Range(ws.Cells(1, 1), ws.Cells(lastRow, lastColumn))
+        cell.WrapText = False
+    Next cell
+
+    ' Loop through each column and adjust the width to fit the longest content
+    For col = 1 To lastColumn
+        ws.Columns(col).AutoFit
+    Next col
+
+    ' Reset the row height to the standard height
+    For Each row In ws.Rows
+        row.RowHeight = 15 ' Standard row height in points
+    Next row
+End Sub
