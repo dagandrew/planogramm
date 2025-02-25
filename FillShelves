@@ -1,30 +1,44 @@
-Sub FillColumnA()
+Sub FillColumnAInSelection()
     Dim ws As Worksheet
-    Dim lastRow As Long
-    Dim i As Long
-    Dim count As Long
+    Dim selectedRange As Range
+    Dim cell As Range
     Dim startValue As Long
+    Dim previousCell As Range
+    Dim columnERange As Range
 
     ' Set the worksheet to the active sheet
     Set ws = ActiveSheet
 
-    ' Find the last row in column E
-    lastRow = ws.Cells(ws.Rows.Count, "E").End(xlUp).Row
+    ' Get the selected range
+    Set selectedRange = Selection
 
-    ' Initialize the starting value
-    startValue = 0
+    ' Intersect the selection with column E
+    Set columnERange = Intersect(selectedRange, ws.Columns("E"))
 
-    ' Loop through each row in column E
-    For i = 1 To lastRow
-        ' Check if the current row is the start of a new group
-        If ws.Cells(i, 5).Value = 1 Then
-            startValue = startValue + 1
-            count = 1
+    ' Check if there is an intersection with column E
+    If Not columnERange Is Nothing Then
+        ' Get the cell immediately before the selection in column A
+        Set previousCell = columnERange.Cells(1, 1).Offset(-1, -4)
+
+        ' Initialize the starting value based on the cell before the selection in column A
+        If IsNumeric(previousCell.Value) Then
+            startValue = previousCell.Value
         Else
-            count = count + 1
+            startValue = 0 ' Default to 0 if no numeric value is found
         End If
 
-        ' Fill the corresponding cell in column A
-        ws.Cells(i, 1).Value = startValue
-    Next i
+        ' Loop through each cell in the intersected range
+        For Each cell In columnERange
+            ' Check if the current cell is the start of a new group
+            If cell.Value = 1 Then
+                startValue = startValue + 1
+            End If
+
+            ' Fill the corresponding cell in column A
+            cell.Offset(0, -4).Value = startValue
+        Next cell
+    Else
+        MsgBox "Please ensure the selection includes cells within column E."
+    End If
 End Sub
+
