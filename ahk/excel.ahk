@@ -1,8 +1,7 @@
-xlApp := ComObjActive("Excel.Application")
-
 LWin & Shift::^+L ;filter
 F2 & Esc::SelectAllExcel()
 F2 & Space::Rename()
+F3 & Space::WrapTextAndAutoFitColumns()
 
 
 #z::UniqueData()
@@ -42,10 +41,12 @@ Rename() {
 }
 
 CreateNewSheet(){
+	xlApp := ComObjActive("Excel.Application")
 	xlApp.Worksheets.Add()
 }
 
 JumpFirstSheet(){
+	xlApp := ComObjActive("Excel.Application")
 	try xlApp.Sheets(1).Activate
 	return
 }
@@ -53,21 +54,25 @@ JumpFirstSheet(){
 
 
 GreenStyle() {
+	xlApp := ComObjActive("Excel.Application")
     try xlApp.Selection.Style := "Хороший"
     return
 }
 
 UsualStyle() {
+	xlApp := ComObjActive("Excel.Application")
 	try xlApp.Selection.Style := "Обычный"
     return
 }
 
 NeutralStyle() {
+	xlApp := ComObjActive("Excel.Application")
 	try xlApp.Selection.Style := "Нейтральный"
     return
 }
 
 BadStyle() {
+	xlApp := ComObjActive("Excel.Application")
 	try xlApp.Selection.Style := "Плохой"
     return
 }
@@ -104,3 +109,17 @@ SelectAllExcel(){
 	Send("{Shift down}{End}{Shift up}")
 }
 
+WrapTextAndAutoFitColumns() {
+	Send("^{v}")
+    xlApp := ComObjActive("Excel.Application")
+    
+    if (xlApp) {
+        xlApp.Selection.WrapText := true
+        
+        xlApp.Selection.Columns.AutoFit
+        
+        MsgBox("Text wrapping and column autofit applied successfully.", "Success", 64)
+    } else {
+        MsgBox("Excel is not active.", "Error", 16)
+    }
+}
