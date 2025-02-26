@@ -9,6 +9,8 @@ F3 & Space::WrapTextAndAutoFitColumns()
 #s::TextOneRow()
 #c::Borders()
 
+!s::SheetSeeker()
+
 CapsLock & a::UsualStyle()
 CapsLock & s::GreenStyle()
 CapsLock & d::NeutralStyle()
@@ -123,3 +125,6 @@ WrapTextAndAutoFitColumns() {
         MsgBox("Excel is not active.", "Error", 16)
     }
 }
+
+#include sheetSeeker.ahk
+
