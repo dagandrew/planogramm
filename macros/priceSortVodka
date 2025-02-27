@@ -1,10 +1,11 @@
-Sub PriceSort()
+Sub PriceSortVodka()
     Dim ws As Worksheet
     Dim selectedRange As Range
     Dim sortRange As Range
     Dim lastRow As Long
     Dim maxPriceDict As Object
     Dim cell As Range
+    Dim brand As String, volume As Double, compositeKey As String
 
     Set ws = ActiveSheet
     Set selectedRange = Selection
@@ -13,20 +14,21 @@ Sub PriceSort()
         Set sortRange = Intersect(selectedRange.EntireRow, ws.UsedRange)
         Set maxPriceDict = CreateObject("Scripting.Dictionary")
 
-        ' Calculate max price for each brand
+        ' Calculate max price for each brand + volume combination
         For Each cell In Intersect(sortRange, ws.Columns("G"))
             If Not IsEmpty(cell.Value) Then
-                Dim brand As String
                 brand = cell.Value
+                volume = cell.Offset(0, 2).Value  ' Column I (Volume) is 2 columns offset from G
+                compositeKey = brand & "|" & volume
                 Dim price As Double
-                price = cell.Offset(0, 3).Value ' Column J (offset from G)
-                
-                If maxPriceDict.Exists(brand) Then
-                    If price > maxPriceDict(brand) Then
-                        maxPriceDict(brand) = price
+                price = cell.Offset(0, 3).Value  ' Column J (Price)
+
+                If maxPriceDict.Exists(compositeKey) Then
+                    If price > maxPriceDict(compositeKey) Then
+                        maxPriceDict(compositeKey) = price
                     End If
                 Else
-                    maxPriceDict.Add brand, price
+                    maxPriceDict.Add compositeKey, price
                 End If
             End If
         Next cell
@@ -34,10 +36,13 @@ Sub PriceSort()
         ' Write max prices to helper column L
         lastRow = sortRange.Rows.Count + sortRange.Row - 1
         ws.Range("L1:L" & lastRow).ClearContents
-        ws.Range("L1").Value = "Max Price Per Brand"
+        ws.Range("L1").Value = "Max Price Per Brand/Volume"
         For Each cell In Intersect(sortRange, ws.Columns("G"))
             If Not IsEmpty(cell.Value) Then
-                cell.Offset(0, 5).Value = maxPriceDict(cell.Value) ' Column L
+                brand = cell.Value
+                volume = cell.Offset(0, 2).Value
+                compositeKey = brand & "|" & volume
+                cell.Offset(0, 5).Value = maxPriceDict(compositeKey)  ' Column L
             End If
         Next cell
 
@@ -46,7 +51,7 @@ Sub PriceSort()
         With ws.Sort
             .SortFields.Clear
             .SortFields.Add Key:=ws.Range("I1"), Order:=xlDescending    ' Volume ↓
-            .SortFields.Add Key:=ws.Range("L1"), Order:=xlDescending   ' Max Price ↓
+            .SortFields.Add Key:=ws.Range("L1"), Order:=xlDescending   ' Max Price ↓ (per brand/volume)
             .SortFields.Add Key:=ws.Range("G1"), Order:=xlAscending     ' Brand ↑
             .SortFields.Add Key:=ws.Range("J1"), Order:=xlDescending    ' Price ↓
             .SetRange sortRange
