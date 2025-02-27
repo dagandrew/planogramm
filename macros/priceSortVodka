@@ -1,0 +1,43 @@
+Sub PriceSort()
+    Dim ws As Worksheet
+    Dim selectedRange As Range
+    Dim sortRange As Range
+    Dim lastRow As Long
+
+    ' Pick current worksheet and selected range
+    Set ws = ActiveSheet
+    Set selectedRange = Selection
+
+    If Not Intersect(selectedRange, ws.Columns("J")) Is Nothing Then
+        Set sortRange = Intersect(selectedRange.EntireRow, ws.UsedRange)
+
+        ' Clear temporary helper column (if any)
+        lastRow = selectedRange.Rows.Count + selectedRange.Row - 1
+        ws.Range("L1:L" & lastRow).ClearContents
+
+        ' Sort by Volume (I) and Price (J), both descending
+        On Error GoTo SortError
+        With ws.Sort
+            .SortFields.Clear
+            ' Add Volume (Column I) as the primary key
+            .SortFields.Add Key:=ws.Range("I1"), Order:=xlDescending
+            ' Add Price (Column J) as the secondary key
+            .SortFields.Add Key:=ws.Range("J1"), Order:=xlDescending
+            .SetRange sortRange
+            .Header = xlYes
+            .MatchCase = False
+            .Orientation = xlTopToBottom
+            .SortMethod = xlPinYin
+            .Apply
+        End With
+        On Error GoTo 0
+
+    Else
+        MsgBox "Please select a range that includes column J.", vbExclamation
+    End If
+
+    Exit Sub
+
+SortError:
+    MsgBox "An error occurred during sorting: " & Err.Description, vbExclamation
+End Sub
