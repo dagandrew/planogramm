@@ -4,7 +4,7 @@ Sub FillColumnAInSelection()
     Dim cell As Range
     Dim startValue As Long
     Dim previousCell As Range
-    Dim columnERange As Range
+    Dim columnGRange As Range
 
     ' Set the worksheet to the active sheet
     Set ws = ActiveSheet
@@ -12,13 +12,13 @@ Sub FillColumnAInSelection()
     ' Get the selected range
     Set selectedRange = Selection
 
-    ' Intersect the selection with column E
-    Set columnERange = Intersect(selectedRange, ws.Columns("E"))
+    ' Intersect the selection with column G
+    Set columnGRange = Intersect(selectedRange, ws.Columns("G"))
 
-    ' Check if there is an intersection with column E
-    If Not columnERange Is Nothing Then
+    ' Check if there is an intersection with column G
+    If Not columnGRange Is Nothing Then
         ' Get the cell immediately before the selection in column A
-        Set previousCell = columnERange.Cells(1, 1).Offset(-1, -4)
+        Set previousCell = columnGRange.Cells(1, 1).Offset(-1, -6)
 
         ' Initialize the starting value based on the cell before the selection in column A
         If IsNumeric(previousCell.Value) Then
@@ -28,17 +28,16 @@ Sub FillColumnAInSelection()
         End If
 
         ' Loop through each cell in the intersected range
-        For Each cell In columnERange
+        For Each cell In columnGRange
             ' Check if the current cell is the start of a new group
             If cell.Value = 1 Then
                 startValue = startValue + 1
             End If
 
             ' Fill the corresponding cell in column A
-            cell.Offset(0, -4).Value = startValue
+            cell.Offset(0, -6).Value = startValue
         Next cell
     Else
-        MsgBox "Please ensure the selection includes cells within column E."
+        MsgBox "Please ensure the selection includes cells within column G."
     End If
 End Sub
-
