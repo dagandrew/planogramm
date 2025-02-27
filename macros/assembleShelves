@@ -1,7 +1,7 @@
 Sub AssembleData()
-    Dim wsAssemble As Worksheet, wsAssembled As Worksheet, wsSource As Worksheet
+    Dim wsAssemble As Worksheet, wsPolki As Worksheet, wsSource As Worksheet
     Dim sheetNames As Range, cell As Range
-    Dim lastRow As Long, sourceLastRow As Long
+    Dim lastRow As Long, sourceLastRow As Long, startRow As Long, batchEndRow As Long
     Dim arrData As Variant, arrFiltered() As Variant
     Dim i As Long, j As Long, filterCount As Long
     
@@ -10,18 +10,21 @@ Sub AssembleData()
     Set wsAssemble = ThisWorkbook.Sheets("Assemble")
     On Error GoTo 0
     If wsAssemble Is Nothing Then
-        MsgBox "'Assemble' sheet not found!", vbCritical
+        MsgBox "Лист 'Assemble' не найден!", vbCritical
         Exit Sub
     End If
     
-    ' Prepare 'Assembled' sheet
+    ' Prepare 'Полки' sheet
     Application.DisplayAlerts = False
     On Error Resume Next
-    ThisWorkbook.Sheets("Assembled").Delete
+    ThisWorkbook.Sheets("Полки").Delete
     On Error GoTo 0
-    Set wsAssembled = ThisWorkbook.Sheets.Add(After:=ThisWorkbook.Sheets(ThisWorkbook.Sheets.Count))
-    wsAssembled.Name = "Assembled"
+    Set wsPolki = ThisWorkbook.Sheets.Add(After:=ThisWorkbook.Sheets(ThisWorkbook.Sheets.Count))
+    wsPolki.Name = "Полки"
     Application.DisplayAlerts = True
+    
+    ' Set headers
+    wsPolki.Range("A1:G1").Value = Array("0", "Код номенклатуры", "Наименование", "MIN", "MAX", "бренд", "Позиция в полке")
     
     ' Get list of sheets to process
     Set sheetNames = wsAssemble.Range("B2", wsAssemble.Cells(wsAssemble.Rows.Count, "B").End(xlUp))
@@ -32,15 +35,15 @@ Sub AssembleData()
         Set wsSource = ThisWorkbook.Sheets(cell.Value)
         On Error GoTo 0
         If wsSource Is Nothing Then
-            MsgBox "Sheet '" & cell.Value & "' not found!", vbExclamation
+            MsgBox "Лист '" & cell.Value & "' не найден!", vbExclamation
             GoTo NextSheet
         End If
         
         ' Find last row with data in columns E, F, or G
         sourceLastRow = GetLastRow(wsSource)
-        If sourceLastRow = 0 Then GoTo NextSheet
+        If sourceLastRow < 1 Then GoTo NextSheet  ' Skip if no data
         
-        ' Load data into array
+        ' Load data into array (E, F, G columns)
         arrData = wsSource.Range("E1:G" & sourceLastRow).Value
         
         ' Filter out completely empty rows
@@ -55,12 +58,26 @@ Sub AssembleData()
             End If
         Next i
         
-        ' Copy filtered data to Assembled sheet
+        ' Copy filtered data to Полки sheet
         If filterCount > 0 Then
-            With wsAssembled
-                lastRow = .Cells(.Rows.Count, "A").End(xlUp).Row
-                If lastRow = 1 And Len(.Range("A1").Value) = 0 Then lastRow = 0
-                .Cells(lastRow + 1, "A").Resize(filterCount, 3).Value = arrFiltered
+            With wsPolki
+                lastRow = .Cells(.Rows.Count, "B").End(xlUp).Row
+                startRow = IIf(lastRow = 1 And Len(.Range("B1")) > 0, 2, lastRow + 1)
+                
+                ' Paste data into B, C, F
+                .Range("B" & startRow).Resize(filterCount, 1).Value = Application.Index(arrFiltered, 0, 1)  ' E -> B
+                .Range("C" & startRow).Resize(filterCount, 1).Value = Application.Index(arrFiltered, 0, 2)  ' F -> C
+                .Range("F" & startRow).Resize(filterCount, 1).Value = Application.Index(arrFiltered, 0, 3)  ' G -> F
+                
+                ' Add bottom border
+                batchEndRow = startRow + filterCount - 1
+                If batchEndRow >= startRow Then
+                    With .Range("A" & batchEndRow & ":G" & batchEndRow).Borders(xlEdgeBottom)
+                        .LineStyle = xlContinuous
+                        .Weight = xlThin
+                        .ColorIndex = xlAutomatic
+                    End With
+                End If
             End With
         End If
 
@@ -68,12 +85,8 @@ NextSheet:
     Next cell
     
     ' Final cleanup
-    With wsAssembled
-        .Columns("A:C").AutoFit
-        .Range("A1:C1").Value = Array("Column E", "Column F", "Column G")
-    End With
-    
-    MsgBox "Data assembled successfully!", vbInformation
+    wsPolki.Columns("A:G").AutoFit
+    MsgBox "Данные собраны успешно!", vbInformation
 End Sub
 
 Function GetLastRow(ws As Worksheet) As Long
