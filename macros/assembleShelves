@@ -10,21 +10,21 @@ Sub AssembleData()
     Set wsAssemble = ThisWorkbook.Sheets("Assemble")
     On Error GoTo 0
     If wsAssemble Is Nothing Then
-        MsgBox "Лист 'Assemble' не найден!", vbCritical
+        MsgBox "Sheet 'Assemble' isnt found!", vbCritical
         Exit Sub
     End If
     
-    ' Prepare 'Полки' sheet
+    ' Prepare '?????' sheet
     Application.DisplayAlerts = False
     On Error Resume Next
-    ThisWorkbook.Sheets("Полки").Delete
+    ThisWorkbook.Sheets("?????").Delete
     On Error GoTo 0
     Set wsPolki = ThisWorkbook.Sheets.Add(After:=ThisWorkbook.Sheets(ThisWorkbook.Sheets.Count))
-    wsPolki.Name = "Полки"
+    wsPolki.Name = "Ïîëêè"
     Application.DisplayAlerts = True
     
     ' Set headers
-    wsPolki.Range("A1:G1").Value = Array("0", "Код номенклатуры", "Наименование", "MIN", "MAX", "бренд", "Позиция в полке")
+    wsPolki.Range("A1:G1").Value = Array("0", "Êîä íîìåíêëàòóðû", "Íàèìåíîâàíèå", "MIN", "MAX", "Áðåíä", "Ïîçèöèÿ")
     
     ' Get list of sheets to process
     Set sheetNames = wsAssemble.Range("B2", wsAssemble.Cells(wsAssemble.Rows.Count, "B").End(xlUp))
@@ -35,7 +35,7 @@ Sub AssembleData()
         Set wsSource = ThisWorkbook.Sheets(cell.Value)
         On Error GoTo 0
         If wsSource Is Nothing Then
-            MsgBox "Лист '" & cell.Value & "' не найден!", vbExclamation
+            MsgBox "Sheet '" & cell.Value & "' not found!", vbExclamation
             GoTo NextSheet
         End If
         
@@ -58,7 +58,7 @@ Sub AssembleData()
             End If
         Next i
         
-        ' Copy filtered data to Полки sheet
+        ' Copy filtered data to ????? sheet
         If filterCount > 0 Then
             With wsPolki
                 lastRow = .Cells(.Rows.Count, "B").End(xlUp).Row
@@ -86,7 +86,7 @@ NextSheet:
     
     ' Final cleanup
     wsPolki.Columns("A:G").AutoFit
-    MsgBox "Данные собраны успешно!", vbInformation
+    MsgBox "Done!", vbInformation
 End Sub
 
 Function GetLastRow(ws As Worksheet) As Long
@@ -101,3 +101,4 @@ Function IsEmptyRow(arr As Variant, rowIndex As Long) As Boolean
     ' Check if all three columns in the row are empty
     IsEmptyRow = (Trim(arr(rowIndex, 1) & arr(rowIndex, 2) & arr(rowIndex, 3)) = "")
 End Function
+
