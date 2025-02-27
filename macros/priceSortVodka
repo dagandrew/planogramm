@@ -3,35 +3,59 @@ Sub PriceSort()
     Dim selectedRange As Range
     Dim sortRange As Range
     Dim lastRow As Long
+    Dim maxPriceDict As Object
+    Dim cell As Range
 
-    ' Pick current worksheet and selected range
     Set ws = ActiveSheet
     Set selectedRange = Selection
 
     If Not Intersect(selectedRange, ws.Columns("J")) Is Nothing Then
         Set sortRange = Intersect(selectedRange.EntireRow, ws.UsedRange)
+        Set maxPriceDict = CreateObject("Scripting.Dictionary")
 
-        ' Clear temporary helper column (if any)
-        lastRow = selectedRange.Rows.Count + selectedRange.Row - 1
+        ' Calculate max price for each brand
+        For Each cell In Intersect(sortRange, ws.Columns("G"))
+            If Not IsEmpty(cell.Value) Then
+                Dim brand As String
+                brand = cell.Value
+                Dim price As Double
+                price = cell.Offset(0, 3).Value ' Column J (offset from G)
+                
+                If maxPriceDict.Exists(brand) Then
+                    If price > maxPriceDict(brand) Then
+                        maxPriceDict(brand) = price
+                    End If
+                Else
+                    maxPriceDict.Add brand, price
+                End If
+            End If
+        Next cell
+
+        ' Write max prices to helper column L
+        lastRow = sortRange.Rows.Count + sortRange.Row - 1
         ws.Range("L1:L" & lastRow).ClearContents
+        ws.Range("L1").Value = "Max Price Per Brand"
+        For Each cell In Intersect(sortRange, ws.Columns("G"))
+            If Not IsEmpty(cell.Value) Then
+                cell.Offset(0, 5).Value = maxPriceDict(cell.Value) ' Column L
+            End If
+        Next cell
 
-        ' Sort by Volume (I) and Price (J), both descending
+        ' Sort by Volume (I) ↓, Max Price (L) ↓, Brand (G) ↑, Price (J) ↓
         On Error GoTo SortError
         With ws.Sort
             .SortFields.Clear
-            ' Add Volume (Column I) as the primary key
-            .SortFields.Add Key:=ws.Range("I1"), Order:=xlDescending
-            ' Add Price (Column J) as the secondary key
-            .SortFields.Add Key:=ws.Range("J1"), Order:=xlDescending
+            .SortFields.Add Key:=ws.Range("I1"), Order:=xlDescending    ' Volume ↓
+            .SortFields.Add Key:=ws.Range("L1"), Order:=xlDescending   ' Max Price ↓
+            .SortFields.Add Key:=ws.Range("G1"), Order:=xlAscending     ' Brand ↑
+            .SortFields.Add Key:=ws.Range("J1"), Order:=xlDescending    ' Price ↓
             .SetRange sortRange
             .Header = xlYes
-            .MatchCase = False
-            .Orientation = xlTopToBottom
-            .SortMethod = xlPinYin
             .Apply
         End With
-        On Error GoTo 0
 
+        ' Cleanup helper column
+        ws.Range("L1:L" & lastRow).ClearContents
     Else
         MsgBox "Please select a range that includes column J.", vbExclamation
     End If
@@ -39,5 +63,5 @@ Sub PriceSort()
     Exit Sub
 
 SortError:
-    MsgBox "An error occurred during sorting: " & Err.Description, vbExclamation
+    MsgBox "Error during sorting: " & Err.Description, vbExclamation
 End Sub
