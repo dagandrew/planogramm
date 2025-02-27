@@ -5,7 +5,6 @@ Sub AssembleData()
     Dim arrData As Variant, arrFiltered() As Variant
     Dim i As Long, j As Long, filterCount As Long
     
-    ' Check if 'Assemble' sheet exists
     On Error Resume Next
     Set wsAssemble = ThisWorkbook.Sheets("Assemble")
     On Error GoTo 0
@@ -14,17 +13,16 @@ Sub AssembleData()
         Exit Sub
     End If
     
-    ' Prepare '?????' sheet
     Application.DisplayAlerts = False
     On Error Resume Next
-    ThisWorkbook.Sheets("?????").Delete
+    ThisWorkbook.Sheets("Полки").Delete
     On Error GoTo 0
     Set wsPolki = ThisWorkbook.Sheets.Add(After:=ThisWorkbook.Sheets(ThisWorkbook.Sheets.Count))
-    wsPolki.Name = "Ïîëêè"
+    wsPolki.Name = "Полки"
     Application.DisplayAlerts = True
     
     ' Set headers
-    wsPolki.Range("A1:G1").Value = Array("0", "Êîä íîìåíêëàòóðû", "Íàèìåíîâàíèå", "MIN", "MAX", "Áðåíä", "Ïîçèöèÿ")
+    wsPolki.Range("A1:G1").Value = Array("0", "Код номенклатуры", "Наименование", "MIN", "MAX", "Бренд", "Позиция")
     
     ' Get list of sheets to process
     Set sheetNames = wsAssemble.Range("B2", wsAssemble.Cells(wsAssemble.Rows.Count, "B").End(xlUp))
@@ -58,7 +56,6 @@ Sub AssembleData()
             End If
         Next i
         
-        ' Copy filtered data to ????? sheet
         If filterCount > 0 Then
             With wsPolki
                 lastRow = .Cells(.Rows.Count, "B").End(xlUp).Row
